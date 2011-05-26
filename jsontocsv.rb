@@ -38,9 +38,9 @@ data.each do |row, values|
 		else
 			arr << item[k]
 		end
-		lines += 1
 	end
 	items += arr.map { |x| "\"#{x}\"" }.join(";") + "\n"
+	lines += 1
 end
 
 out = cols.map { |x| "\"#{x}\"" }.join(";")+"\n"
