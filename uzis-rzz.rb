@@ -29,7 +29,11 @@ end
 def get_page(uri)
 	fname = CACHE_DIR + "/" + Digest::MD5.hexdigest(uri) + ".html"
 	if File.exists?(fname) && File.size(fname) > 0
-		file = File.open(fname).read
+		begin
+			file = File.open(fname).read
+		rescue Timeout
+			retry
+		end
 	else
 		file = open(uri).read
 		File.open(fname, 'w') { |f| f.write(file) }
