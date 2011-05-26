@@ -7,6 +7,7 @@ require 'json'
 require 'cgi'
 require 'digest/md5'
 require 'progressbar'
+require 'iconv'
 
 ############ config
 
@@ -113,9 +114,11 @@ end
 
 # process
 begin
+	converter = Iconv.new("cp1250", "utf8")
 	regions.each do |region|
 		msg "===> #{region[:name]} .. "
-		list = parse_list(base_region_uri.sub('{id}', CGI::escape(region[:id])))
+		v = CGI.escape(converter.iconv(region[:id]))
+		list = parse_list(base_region_uri.sub('{id}', v))
 
 		# find loaded items
 		to_load = []
