@@ -30,13 +30,13 @@ end
 def get_page(uri)
 	fname = CACHE_DIR + "/" + Digest::MD5.hexdigest(uri) + ".html"
 	if File.exists?(fname) && File.size(fname) > 0
+		file = File.open(fname).read
+	else
 		begin
-			file = File.open(fname).read
-		rescue Timeout
+			file = open(uri).read
+		rescue Timeout::Error
 			retry
 		end
-	else
-		file = open(uri).read
 		File.open(fname, 'w') { |f| f.write(file) }
 	end
 	Nokogiri::HTML(file)
@@ -137,9 +137,9 @@ begin
 		pbar.finish
 	end
 
-rescue Exception
-	msg($!.class.to_s == "Interrupt" ? "\n\nPressing CTRL-C. Aborting .. \n" : 
-			 "\n\nerror: [#{$!.class}] #{$!}\nbacktrace:\n#{$!.backtrace.join("\n")}\n\n")
+rescue Exception => e
+	msg(e.class.to_s == "Interrupt" ? "\n\nPressing CTRL-C. Aborting .. \n" : 
+			 "\n\nerror: [#{e.class}] #{e}\nbacktrace:\n#{e.backtrace.join("\n")}\n\n")
 ensure
 	# save database
 	msg "Saving database .. "
