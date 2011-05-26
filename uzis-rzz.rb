@@ -11,7 +11,7 @@ require 'progressbar'
 ############ config
 
 base_uri = 'https://snzr.uzis.cz/viewzz/RZZHledat1.htm'
-base_region_uri = 'https://snzr.uzis.cz/viewzz/lb/RZZSeznam.pl?KRAJ={id}&ORP=V%8AE&OBEC=V%8AE&TYP=V%8AE&DRZAR=V%8AE&ZRIZOVATEL=V%8AE&NAZEV=V%8AE&Hledat=Hledat&WAIT_PAGE=ON'
+base_region_uri = 'https://snzr.uzis.cz/viewzz/lb/RZZSeznam.pl?KRAJ={id}&WAIT_PAGE=ON'
 base_item_uri = 'https://snzr.uzis.cz/viewzz/lb/RZZDetail.pl?{id}=Detail&WAIT_PAGE=ON'
 
 DB_FILE = './data.json'
@@ -86,19 +86,12 @@ def parse_list(uri)
 	list = []
 
 	doc.css('body > table').each do |t|
-		case t['width']
-			# druh zarizeni
-			when "643"
-				base_vals[:type_id], base_vals[:type_name] = t.text.sanity.split("  ")
-			# ORP
-			when "811"
-				base_vals[:orp] = t.text.sanity.match(/^ORP:  (.+)$/)[1]
-			when "800"
-				t.css('tr > td > table > tr > td > table > tr').each do |l|
-					next if l.css('td:nth-child(1)').first.text == 'Název'
-					rzz_id = l.css('td:nth-child(4) a').first['onclick'].match(/RZZDetail\.pl\?(\d+)=Detail/)[1]
-					list << rzz_id
-				end
+		if t['width'] == "800"
+			t.css('tr > td > table > tr > td > table > tr').each do |l|
+				next if l.css('td:nth-child(1)').first.text == 'Název'
+				rzz_id = l.css('td:nth-child(4) a')[0]['onclick'].match(/pl\?(\d+)=D/)[1]
+				list << rzz_id
+			end
 		end
 	end
 	list
@@ -123,7 +116,8 @@ begin
 		# find loaded items
 		to_load = []
 		list.each { |i| (to_load << i) if !db.include?(i) }
-		msg "#{list.size} items on web, #{list.size-to_load.size} in local database, #{to_load.size} to fetch\n"
+		msg "#{list.size} items on web, #{list.size-to_load.size} in local database, " +
+			"#{to_load.size} to fetch\n"
 
 
 		# fetch not loaded items
@@ -137,7 +131,8 @@ begin
 	end
 
 rescue Exception
-	msg($!.class.to_s == "Interrupt" ? "\n\nPressing CTRL-C. Aborting .. \n" : "\n\nerror: [#{$!.class}] #{$!}\nbacktrace:\n#{$!.backtrace.join("\n")}\n\n")
+	msg($!.class.to_s == "Interrupt" ? "\n\nPressing CTRL-C. Aborting .. \n" : 
+			 "\n\nerror: [#{$!.class}] #{$!}\nbacktrace:\n#{$!.backtrace.join("\n")}\n\n")
 ensure
 	# save database
 	msg "Saving database .. "
