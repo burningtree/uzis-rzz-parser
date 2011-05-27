@@ -91,13 +91,20 @@ def parse_list(uri)
 	list = []
 
 	doc.css('body > table').each do |t|
-		if t['width'] == "800"
+		if ["800", "1026"].include?(t['width'])
 			t.css('tr > td > table > tr > td > table > tr').each do |l|
 				next if l.css('td:nth-child(1)').first.text == 'Název'
-				rzz_id = l.css('td:nth-child(4) a')[0]['onclick'].match(/pl\?(\d+)=D/)[1]
+				dcol = (t['width'] == "1026") ? "5" : "4"
+				rzz_id = l.css('td:nth-child('+dcol+') a')[0]['onclick'].match(/pl\?(\d+)=D/)[1]
 				list << rzz_id
 			end
 		end
+	end
+
+	# if generated list size not equal to web links count
+	if list.size != (total=doc.to_s.scan('RZZDetail.pl?').size)
+		msg "bad items count #{list.size} != #{total}"
+		Process.exit
 	end
 	list
 end
